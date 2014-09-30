@@ -15,7 +15,7 @@
    +----------------------------------------------------------------------+
 */
 
-#include "hphp/runtime/ext/ext_file.h"
+#include "hphp/runtime/ext/std/ext_std_file.h"
 #include "hphp/runtime/ext/ext_string.h"
 #include "hphp/runtime/ext/stream/ext_stream.h"
 #include "hphp/runtime/ext/ext_hash.h"
@@ -240,7 +240,7 @@ Array stat_impl(struct stat *stat_sb) {
 const int64_t k_STREAM_URL_STAT_LINK = 1;
 const int64_t k_STREAM_URL_STAT_QUIET = 2;
 
-Variant f_fopen(const String& filename, const String& mode,
+Variant HHVM_FUNCTION(fopen, const String& filename, const String& mode,
                 bool use_include_path /* = false */,
                 const Variant& context /* = null */) {
   CHECK_PATH_FALSE(filename, 1);
@@ -264,7 +264,7 @@ Variant f_fopen(const String& filename, const String& mode,
   return resource;
 }
 
-Variant f_popen(const String& command, const String& mode) {
+Variant HHVM_FUNCTION(popen, const String& command, const String& mode) {
   CHECK_PATH_FALSE(command, 1);
   File *file = NEWOBJ(Pipe)();
   Resource handle(file);
@@ -277,29 +277,29 @@ Variant f_popen(const String& command, const String& mode) {
   return handle;
 }
 
-bool f_fclose(const Resource& handle) {
+bool HHVM_FUNCTION(fclose, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   return CHECK_ERROR(f->close());
 }
 
-Variant f_pclose(const Resource& handle) {
+Variant HHVM_FUNCTION(pclose, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   CHECK_ERROR(f->close());
   return s_file_data->m_pcloseRet;
 }
 
-Variant f_fseek(const Resource& handle, int64_t offset,
+Variant HHVM_FUNCTION(fseek, const Resource& handle, int64_t offset,
                 int64_t whence /* = k_SEEK_SET */) {
   CHECK_HANDLE(handle, f);
   return CHECK_ERROR(f->seek(offset, whence)) ? 0 : -1;
 }
 
-bool f_rewind(const Resource& handle) {
+bool HHVM_FUNCTION(rewind, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   return CHECK_ERROR(f->rewind());
 }
 
-Variant f_ftell(const Resource& handle) {
+Variant HHVM_FUNCTION(ftell, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   int64_t ret = f->tell();
   if (!CHECK_ERROR(ret != -1)) {
@@ -308,12 +308,12 @@ Variant f_ftell(const Resource& handle) {
   return ret;
 }
 
-bool f_feof(const Resource& handle) {
+bool HHVM_FUNCTION(feof, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   return f->eof();
 }
 
-Variant f_fstat(const Resource& handle) {
+Variant HHVM_FUNCTION(fstat, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   struct stat sb;
   if (!CHECK_ERROR(f->stat(&sb)))
@@ -321,7 +321,7 @@ Variant f_fstat(const Resource& handle) {
   return stat_impl(&sb);
 }
 
-Variant f_fread(const Resource& handle, int64_t length) {
+Variant HHVM_FUNCTION(fread, const Resource& handle, int64_t length) {
   CHECK_HANDLE(handle, f);
   if (length < 1) {
     raise_warning(
@@ -332,7 +332,7 @@ Variant f_fread(const Resource& handle, int64_t length) {
   return f->read(length);
 }
 
-Variant f_fgetc(const Resource& handle) {
+Variant HHVM_FUNCTION(fgetc, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   int result = f->getc();
   if (result == EOF) {
@@ -341,7 +341,7 @@ Variant f_fgetc(const Resource& handle) {
   return String::FromChar(result);
 }
 
-Variant f_fgets(const Resource& handle, int64_t length /* = 0 */) {
+Variant HHVM_FUNCTION(fgets, const Resource& handle, int64_t length /* = 0 */) {
   if (length < 0) {
     throw_invalid_argument("length (negative): %" PRId64, length);
     return false;
@@ -354,31 +354,31 @@ Variant f_fgets(const Resource& handle, int64_t length /* = 0 */) {
   return false;
 }
 
-Variant f_fgetss(const Resource& handle, int64_t length /* = 0 */,
+Variant HHVM_FUNCTION(fgetss, const Resource& handle, int64_t length /* = 0 */,
                  const String& allowable_tags /* = null_string */) {
-  Variant ret = f_fgets(handle, length);
+  Variant ret = HHVM_FN(fgets)(handle, length);
   if (!same(ret, false)) {
     return StringUtil::StripHTMLTags(ret.toString(), allowable_tags);
   }
   return ret;
 }
 
-Variant f_fscanf(int _argc, const Resource& handle, const String& format,
-                 const Array& _argv /* = null_array */) {
+Variant HHVM_FUNCTION(fscanf, const Resource& handle, const String& format,
+                 const Array& args /* = null_array */) {
   CHECK_HANDLE(handle, f);
   String line = f->readLine();
   if (line.length() == 0) {
     return false;
   }
-  return f_sscanf(_argc, line, format, _argv);
+  return HHVM_FN(sscanf)(args.size(), line, format, args);
 }
 
-Variant f_fpassthru(const Resource& handle) {
+Variant HHVM_FUNCTION(fpassthru, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   return f->print();
 }
 
-Variant f_fwrite(const Resource& handle, const String& data, int64_t length /* = 0 */) {
+Variant HHVM_FUNCTION(fwrite, const Resource& handle, const String& data, int64_t length /* = 0 */) {
   CHECK_HANDLE(handle, f);
   int64_t ret = f->write(data, length);
   if (ret < 0) {
@@ -389,37 +389,37 @@ Variant f_fwrite(const Resource& handle, const String& data, int64_t length /* =
   return ret;
 }
 
-Variant f_fputs(const Resource& handle, const String& data, int64_t length /* = 0 */) {
+Variant HHVM_FUNCTION(fputs, const Resource& handle, const String& data, int64_t length /* = 0 */) {
   CHECK_HANDLE(handle, f);
   int64_t ret = f->write(data, length);
   if (ret < 0) ret = 0;
   return ret;
 }
 
-Variant f_fprintf(int _argc, const Resource& handle, const String& format,
-                  const Array& _argv /* = null_array */) {
-  CHECK_HANDLE(handle, f);
-  return f->printf(format, _argv);
-}
-
-Variant f_vfprintf(const Resource& handle, const String& format, const Array& args) {
+Variant HHVM_FUNCTION(fprintf, const Resource& handle, const String& format,
+                  const Array& args /* = null_array */) {
   CHECK_HANDLE(handle, f);
   return f->printf(format, args);
 }
 
-bool f_fflush(const Resource& handle) {
+Variant HHVM_FUNCTION(vfprintf, const Resource& handle, const String& format, const Array& args) {
+  CHECK_HANDLE(handle, f);
+  return f->printf(format, args);
+}
+
+bool HHVM_FUNCTION(fflush, const Resource& handle) {
   CHECK_HANDLE(handle, f);
   return CHECK_ERROR(f->flush());
 }
 
-bool f_ftruncate(const Resource& handle, int64_t size) {
+bool HHVM_FUNCTION(ftruncate, const Resource& handle, int64_t size) {
   CHECK_HANDLE(handle, f);
   return CHECK_ERROR(f->truncate(size));
 }
 
 static int flock_values[] = { LOCK_SH, LOCK_EX, LOCK_UN };
 
-bool f_flock(const Resource& handle, int operation, VRefParam wouldblock /* = null */) {
+bool HHVM_FUNCTION(flock, const Resource& handle, int operation, VRefParam wouldblock /* = null */) {
   CHECK_HANDLE(handle, f);
   bool block = false;
   int act;
@@ -445,7 +445,7 @@ bool f_flock(const Resource& handle, int operation, VRefParam wouldblock /* = nu
   }                                                     \
   char NAME ## _char = NAME.charAt(0);                  \
 
-Variant f_fputcsv(const Resource& handle, const Array& fields,
+Variant HHVM_FUNCTION(fputcsv, const Resource& handle, const Array& fields,
                   const String& delimiter /* = "," */,
                   const String& enclosure /* = "\"" */) {
   FCSV_CHECK_ARG(delimiter);
@@ -455,7 +455,7 @@ Variant f_fputcsv(const Resource& handle, const Array& fields,
   return f->writeCSV(fields, delimiter_char, enclosure_char);
 }
 
-Variant f_fgetcsv(const Resource& handle, int64_t length /* = 0 */,
+Variant HHVM_FUNCTION(fgetcsv, const Resource& handle, int64_t length /* = 0 */,
                   const String& delimiter /* = "," */,
                   const String& enclosure /* = "\"" */,
                   const String& escape /* = "\\" */) {
@@ -478,18 +478,18 @@ Variant f_fgetcsv(const Resource& handle, int64_t length /* = 0 */,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Variant f_file_get_contents(const String& filename,
+Variant HHVM_FUNCTION(file_get_contents, const String& filename,
                             bool use_include_path /* = false */,
                             const Variant& context /* = null */,
                             int64_t offset /* = -1 */,
                             int64_t maxlen /* = -1 */) {
   CHECK_PATH(filename, 1);
-  Variant stream = f_fopen(filename, "rb", use_include_path, context);
+  Variant stream = HHVM_FUNCTION(fopen, filename, "rb", use_include_path, context);
   if (same(stream, false)) return false;
-  return f_stream_get_contents(stream.toResource(), maxlen, offset);
+  return HHVM_FUNCTION(stream_get_contents, stream.toResource(), maxlen, offset);
 }
 
-Variant f_file_put_contents(const String& filename, const Variant& data,
+Variant HHVM_FUNCTION(file_put_contents, const String& filename, const Variant& data,
                             int flags /* = 0 */,
                             const Variant& context /* = null */) {
   CHECK_PATH(filename, 1);
@@ -570,10 +570,10 @@ Variant f_file_put_contents(const String& filename, const Variant& data,
   return numbytes;
 }
 
-Variant f_file(const String& filename, int flags /* = 0 */,
+Variant HHVM_FUNCTION(file, const String& filename, int flags /* = 0 */,
                const Variant& context /* = null */) {
   CHECK_PATH(filename, 1);
-  Variant contents = f_file_get_contents(filename,
+  Variant contents = HHVM_FN(file_get_contents)(filename,
                                          flags & PHP_FILE_USE_INCLUDE_PATH,
                                          context);
   if (same(contents, false)) {
@@ -629,39 +629,39 @@ Variant f_file(const String& filename, int flags /* = 0 */,
   return ret;
 }
 
-Variant f_readfile(const String& filename, bool use_include_path /* = false */,
+Variant HHVM_FUNCTION(readfile, const String& filename, bool use_include_path /* = false */,
                    const Variant& context /* = null */) {
   CHECK_PATH_FALSE(filename, 1);
-  Variant f = f_fopen(filename, "rb", use_include_path, context);
+  Variant f = HHVM_FN(fopen)(filename, "rb", use_include_path, context);
   if (same(f, false)) {
     Logger::Verbose("%s/%d: %s", __FUNCTION__, __LINE__,
                     folly::errnoStr(errno).c_str());
     return false;
   }
-  Variant ret = f_fpassthru(f.toResource());
+  Variant ret = HHVM_FN(fpassthru)(f.toResource());
   return ret;
 }
 
-bool f_move_uploaded_file(const String& filename, const String& destination) {
+bool HHVM_FUNCTION(move_uploaded_file, const String& filename, const String& destination) {
   Transport *transport = g_context->getTransport();
   if (!transport || !transport->isUploadedFile(filename)) {
     return false;
   }
 
-  if (f_rename(filename, destination)) {
+  if (HHVM_FN(rename)(filename, destination)) {
     return true;
   }
 
   // If rename didn't work, fall back to copy followed by unlink
-  if (!f_copy(filename, destination)) {
+  if (!HHVM_FN(copy)(filename, destination)) {
     return false;
   }
-  f_unlink(filename);
+  HHVM_FN(unlink)(filename);
 
   return true;
 }
 
-Variant f_parse_ini_file(const String& filename,
+Variant HHVM_FN(parse_ini_file)(const String& filename,
                          bool process_sections /* = false */,
                          int scanner_mode /* = k_INI_SCANNER_NORMAL */) {
   CHECK_PATH_FALSE(filename, 1);
@@ -671,7 +671,7 @@ Variant f_parse_ini_file(const String& filename,
   }
 
   String translated = File::TranslatePath(filename);
-  if (translated.empty() || !f_file_exists(translated)) {
+  if (translated.empty() || !HHVM_FN(file_exists)(translated)) {
     if (filename[0] != '/') {
       auto const cfd = String::attach(g_context->getContainingFileName());
       if (!cfd.empty()) {
@@ -682,24 +682,24 @@ Variant f_parse_ini_file(const String& filename,
       }
     }
   }
-  Variant content = f_file_get_contents(translated);
+  Variant content = HHVM_FN(file_get_contents)(translated);
   if (same(content, false)) return false;
   return IniSetting::FromString(content.toString(), filename, process_sections,
                                 scanner_mode);
 }
 
-Variant f_parse_ini_string(const String& ini,
+Variant HHVM_FUNCTION(parse_ini_string, const String& ini,
                            bool process_sections /* = false */,
                            int scanner_mode /* = k_INI_SCANNER_NORMAL */) {
   return IniSetting::FromString(ini, "", process_sections, scanner_mode);
 }
 
-Variant f_md5_file(const String& filename, bool raw_output /* = false */) {
+Variant HHVM_FUNCTION(md5_file, const String& filename, bool raw_output /* = false */) {
   CHECK_PATH(filename, 1);
   return HHVM_FN(hash_file)("md5", filename, raw_output);
 }
 
-Variant f_sha1_file(const String& filename, bool raw_output /* = false */) {
+Variant HHVM_FUNCTION(sha1_file, const String& filename, bool raw_output /* = false */) {
   CHECK_PATH(filename, 1);
   return HHVM_FN(hash_file)("sha1", filename, raw_output);
 }
@@ -707,21 +707,21 @@ Variant f_sha1_file(const String& filename, bool raw_output /* = false */) {
 ///////////////////////////////////////////////////////////////////////////////
 // stats functions
 
-Variant f_fileperms(const String& filename) {
+Variant HHVM_FUNCTION(fileperms, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (int64_t)sb.st_mode;
 }
 
-Variant f_fileinode(const String& filename) {
+Variant HHVM_FUNCTION(fileinode, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb));
   return (int64_t)sb.st_ino;
 }
 
-Variant f_filesize(const String& filename) {
+Variant HHVM_FUNCTION(filesize, const String& filename) {
   CHECK_PATH(filename, 1);
   if (StaticContentCache::TheFileCache) {
     int64_t size =
@@ -734,42 +734,42 @@ Variant f_filesize(const String& filename) {
   return (int64_t)sb.st_size;
 }
 
-Variant f_fileowner(const String& filename) {
+Variant HHVM_FUNCTION(fileowner, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (int64_t)sb.st_uid;
 }
 
-Variant f_filegroup(const String& filename) {
+Variant HHVM_FUNCTION(filegroup, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (int64_t)sb.st_gid;
 }
 
-Variant f_fileatime(const String& filename) {
+Variant HHVM_FUNCTION(fileatime, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (int64_t)sb.st_atime;
 }
 
-Variant f_filemtime(const String& filename) {
+Variant HHVM_FUNCTION(filemtime, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (int64_t)sb.st_mtime;
 }
 
-Variant f_filectime(const String& filename) {
+Variant HHVM_FUNCTION(filectime, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (int64_t)sb.st_ctime;
 }
 
-Variant f_filetype(const String& filename) {
+Variant HHVM_FUNCTION(filetype, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(lstatSyscall(filename, &sb));
@@ -786,14 +786,14 @@ Variant f_filetype(const String& filename) {
   return "unknown";
 }
 
-Variant f_linkinfo(const String& filename) {
+Variant HHVM_FUNCTION(linkinfo, const String& filename) {
   CHECK_PATH(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb));
   return (int64_t)sb.st_dev;
 }
 
-bool f_is_writable(const String& filename) {
+bool HHVM_FUNCTION(is_writable, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   if (filename.empty()) {
     return false;
@@ -824,12 +824,12 @@ bool f_is_writable(const String& filename) {
   */
 }
 
-bool f_is_writeable(const String& filename) {
+bool HHVM_FUNCTION(is_writeable, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
-  return f_is_writable(filename);
+  return HHVM_FUNCTION(is_writable, filename);
 }
 
-bool f_is_readable(const String& filename) {
+bool HHVM_FUNCTION(is_readable, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   if (filename.empty()) {
     return false;
@@ -860,7 +860,7 @@ bool f_is_readable(const String& filename) {
   */
 }
 
-bool f_is_executable(const String& filename) {
+bool HHVM_FUNCTION(is_executable, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   if (filename.empty()) {
     return false;
@@ -891,14 +891,14 @@ bool f_is_executable(const String& filename) {
   */
 }
 
-bool f_is_file(const String& filename) {
+bool HHVM_FUNCTION(is_file, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(statSyscall(filename, &sb, true));
   return (sb.st_mode & S_IFMT) == S_IFREG;
 }
 
-bool f_is_dir(const String& filename) {
+bool HHVM_FUNCTION(is_dir, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   String cwd;
   if (filename.empty()) {
@@ -917,14 +917,14 @@ bool f_is_dir(const String& filename) {
   return (sb.st_mode & S_IFMT) == S_IFDIR;
 }
 
-bool f_is_link(const String& filename) {
+bool HHVM_FUNCTION(is_link, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   struct stat sb;
   CHECK_SYSTEM(lstatSyscall(filename, &sb));
   return (sb.st_mode & S_IFMT) == S_IFLNK;
 }
 
-bool f_is_uploaded_file(const String& filename) {
+bool HHVM_FUNCTION(is_uploaded_file, const String& filename) {
   Transport *transport = g_context->getTransport();
   if (transport) {
     return transport->isUploadedFile(filename);
@@ -932,7 +932,7 @@ bool f_is_uploaded_file(const String& filename) {
   return false;
 }
 
-bool f_file_exists(const String& filename) {
+bool HHVM_FUNCTION(file_exists, const String& filename) {
   CHECK_PATH_FALSE(filename, 1);
   if (filename.empty() ||
       (accessSyscall(filename, F_OK, true)) < 0) {
@@ -941,7 +941,7 @@ bool f_file_exists(const String& filename) {
   return true;
 }
 
-Variant f_stat(const String& filename) {
+Variant HHVM_FUNCTION(stat, const String& filename) {
   CHECK_PATH(filename, 1);
   if (filename.empty()) {
     return false;
@@ -952,7 +952,7 @@ Variant f_stat(const String& filename) {
   return stat_impl(&sb);
 }
 
-Variant f_lstat(const String& filename) {
+Variant HHVM_FUNCTION(lstat, const String& filename) {
   CHECK_PATH(filename, 1);
   if (filename.empty()) {
     return false;
@@ -963,12 +963,12 @@ Variant f_lstat(const String& filename) {
   return stat_impl(&sb);
 }
 
-void f_clearstatcache(bool clear_realpath_cache /* = false */,
+void HHVM_FUNCTION(clearstatcache, bool clear_realpath_cache /* = false */,
                       const String& filename /* = null_string */) {
   // we are not having a cache for file stats, so do nothing here
 }
 
-Variant f_readlink_internal(const String& path, bool warning_compliance) {
+Variant HHVM_FUNCTION(readlink_internal, const String& path, bool warning_compliance) {
   char buff[PATH_MAX];
   int ret = readlink(File::TranslatePath(path).data(), buff, PATH_MAX-1);
   if (ret < 0) {
@@ -983,11 +983,11 @@ Variant f_readlink_internal(const String& path, bool warning_compliance) {
   return String(buff, ret, CopyString);
 }
 
-Variant f_readlink(const String& path) {
-  return f_readlink_internal(path, true);
+Variant HHVM_FUNCTION(readlink, const String& path) {
+  return HHVM_FN(readlink_internal)(path, true);
 }
 
-Variant f_realpath(const String& path) {
+Variant HHVM_FUNCTION(realpath, const String& path) {
   CHECK_PATH(path, 1);
   String translated = File::TranslatePath(path);
   if (translated.empty()) {
@@ -1020,7 +1020,7 @@ const StaticString
   s_extension("extension"),
   s_filename("filename");
 
-Variant f_pathinfo(const String& path, int opt /* = 15 */) {
+Variant HHVM_FUNCTION(pathinfo, const String& path, int opt /* = 15 */) {
   ArrayInit ret(4, ArrayInit::Map{});
 
   if (opt == 0) {
@@ -1028,7 +1028,7 @@ Variant f_pathinfo(const String& path, int opt /* = 15 */) {
   }
 
   if ((opt & PHP_PATHINFO_DIRNAME) == PHP_PATHINFO_DIRNAME) {
-    String dirname = f_dirname(path);
+    String dirname = HHVM_FN(dirname)(path);
     if (opt == PHP_PATHINFO_DIRNAME) {
       return dirname;
     }
@@ -1037,7 +1037,7 @@ Variant f_pathinfo(const String& path, int opt /* = 15 */) {
     }
   }
 
-  String basename = f_basename(path);
+  String basename = HHVM_FN(basename)(path);
   if ((opt & PHP_PATHINFO_BASENAME) == PHP_PATHINFO_BASENAME) {
     if (opt == PHP_PATHINFO_BASENAME) {
       return basename;
@@ -1074,31 +1074,31 @@ Variant f_pathinfo(const String& path, int opt /* = 15 */) {
   return ret.toVariant();
 }
 
-Variant f_disk_free_space(const String& directory) {
+Variant HHVM_FUNCTION(disk_free_space, const String& directory) {
   CHECK_PATH(directory, 1);
   struct statfs buf;
   String translated = File::TranslatePath(directory);
   CHECK_SYSTEM(statfs(translated.c_str(), &buf));
-  return (double)buf.f_bsize * (double)buf.f_bavail;
+  return (double)buf.HHVM_FUNCTION(bsize * , double)buf.HHVM_FUNCTION(bavail;
 }
 
-Variant f_diskfreespace(const String& directory) {
+Variant f_diskfreespace, const String& directory) {
   CHECK_PATH(directory, 1);
-  return f_disk_free_space(directory);
+  return HHVM_FN(disk_free_space)(directory);
 }
 
-Variant f_disk_total_space(const String& directory) {
+Variant HHVM_FUNCTION(disk_total_space, const String& directory) {
   CHECK_PATH(directory, 1);
   struct statfs buf;
   String translated = File::TranslatePath(directory);
   CHECK_SYSTEM(statfs(translated.c_str(), &buf));
-  return (double)buf.f_bsize * (double)buf.f_blocks;
+  return (double)buf.HHVM_FUNCTION(bsize * , double)buf.HHVM_FUNCTION(blocks;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // system wrappers
 
-bool f_chmod(const String& filename, int64_t mode) {
+bool f_chmod, const String& filename, int64_t mode) {
   CHECK_PATH_FALSE(filename, 1);
   String translated = File::TranslatePath(filename);
   CHECK_SYSTEM(chmod(translated.c_str(), mode));
@@ -1122,7 +1122,7 @@ static int get_uid(const Variant& user) {
   return uid;
 }
 
-bool f_chown(const String& filename, const Variant& user) {
+bool HHVM_FUNCTION(chown, const String& filename, const Variant& user) {
   CHECK_PATH_FALSE(filename, 1);
   int uid = get_uid(user);
   if (uid == 0) return false;
@@ -1130,7 +1130,7 @@ bool f_chown(const String& filename, const Variant& user) {
   return true;
 }
 
-bool f_lchown(const String& filename, const Variant& user) {
+bool HHVM_FUNCTION(lchown, const String& filename, const Variant& user) {
   CHECK_PATH_FALSE(filename, 1);
   int uid = get_uid(user);
   if (uid == 0) return false;
@@ -1155,7 +1155,7 @@ static int get_gid(const Variant& group) {
   return gid;
 }
 
-bool f_chgrp(const String& filename, const Variant& group) {
+bool HHVM_FUNCTION(chgrp, const String& filename, const Variant& group) {
   CHECK_PATH_FALSE(filename, 1);
   int gid = get_gid(group);
   if (gid == 0) return false;
@@ -1163,7 +1163,7 @@ bool f_chgrp(const String& filename, const Variant& group) {
   return true;
 }
 
-bool f_lchgrp(const String& filename, const Variant& group) {
+bool HHVM_FUNCTION(lchgrp, const String& filename, const Variant& group) {
   CHECK_PATH_FALSE(filename, 1);
   int gid = get_gid(group);
   if (gid == 0) return false;
@@ -1171,7 +1171,7 @@ bool f_lchgrp(const String& filename, const Variant& group) {
   return true;
 }
 
-bool f_touch(const String& filename, int64_t mtime /* = 0 */,
+bool HHVM_FUNCTION(touch, const String& filename, int64_t mtime /* = 0 */,
              int64_t atime /* = 0 */) {
   CHECK_PATH_FALSE(filename, 1);
 
@@ -1210,27 +1210,27 @@ bool f_touch(const String& filename, int64_t mtime /* = 0 */,
   return true;
 }
 
-bool f_copy(const String& source, const String& dest,
+bool HHVM_FUNCTION(copy, const String& source, const String& dest,
             const Variant& context /* = null */) {
   CHECK_PATH_FALSE(source, 1);
   CHECK_PATH_FALSE(dest, 2);
   if (!context.isNull() || !File::IsPlainFilePath(source) ||
       !File::IsPlainFilePath(dest)) {
-    Variant sfile = f_fopen(source, "r", false, context);
+    Variant sfile = HHVM_FN(fopen)(source, "r", false, context);
     if (same(sfile, false)) {
       return false;
     }
-    Variant dfile = f_fopen(dest, "w", false, context);
+    Variant dfile = HHVM_FN(fopen)(dest, "w", false, context);
     if (same(dfile, false)) {
       return false;
     }
 
-    if (!f_stream_copy_to_stream(sfile.toResource(),
+    if (!HHVM_FN(stream_copy_to_stream)(sfile.toResource(),
                                  dfile.toResource()).toBoolean()) {
       return false;
     }
 
-    return f_fclose(dfile.toResource());
+    return HHVM_FN(fclose)(dfile.toResource());
   } else {
     int ret =
       RuntimeOption::UseDirectCopy ?
@@ -1243,7 +1243,7 @@ bool f_copy(const String& source, const String& dest,
   }
 }
 
-bool f_rename(const String& oldname, const String& newname,
+bool HHVM_FUNCTION(rename, const String& oldname, const String& newname,
               const Variant& context /* = null */) {
   CHECK_PATH_FALSE(oldname, 1);
   CHECK_PATH_FALSE(newname, 2);
@@ -1257,7 +1257,7 @@ bool f_rename(const String& oldname, const String& newname,
   return true;
 }
 
-int64_t f_umask(const Variant& mask /* = null_variant */) {
+int64_t HHVM_FUNCTION(umask, const Variant& mask /* = null_variant */) {
   int oldumask = umask(077);
   if (mask.isNull()) {
     umask(oldumask);
@@ -1267,7 +1267,7 @@ int64_t f_umask(const Variant& mask /* = null_variant */) {
   return oldumask;
 }
 
-bool f_unlink(const String& filename, const Variant& context /* = null */) {
+bool HHVM_FUNCTION(unlink, const String& filename, const Variant& context /* = null */) {
   CHECK_PATH_FALSE(filename, 1);
   Stream::Wrapper* w = Stream::getWrapperFromURI(filename);
   if (!w) return false;
@@ -1275,7 +1275,7 @@ bool f_unlink(const String& filename, const Variant& context /* = null */) {
   return true;
 }
 
-bool f_link(const String& target, const String& link) {
+bool HHVM_FUNCTION(link, const String& target, const String& link) {
   CHECK_PATH_FALSE(target, 1);
   CHECK_PATH_FALSE(link, 2);
   CHECK_SYSTEM(::link(File::TranslatePath(target).data(),
@@ -1283,7 +1283,7 @@ bool f_link(const String& target, const String& link) {
   return true;
 }
 
-bool f_symlink(const String& target, const String& link) {
+bool HHVM_FUNCTION(symlink, const String& target, const String& link) {
   CHECK_PATH_FALSE(target, 1);
   CHECK_PATH_FALSE(link, 2);
   CHECK_SYSTEM(symlink(File::TranslatePathKeepRelative(target).data(),
@@ -1291,7 +1291,7 @@ bool f_symlink(const String& target, const String& link) {
   return true;
 }
 
-String f_basename(const String& path,
+String HHVM_FUNCTION(basename, const String& path,
                   const String& suffix /* = null_string */) {
   int state = 0;
   const char *c = path.data();
@@ -1320,7 +1320,7 @@ String f_basename(const String& path,
   return String(comp, cend - comp, CopyString);
 }
 
-bool f_fnmatch(const String& pattern,
+bool HHVM_FUNCTION(fnmatch, const String& pattern,
                const String& filename, int flags /* = 0 */) {
   CHECK_PATH_FALSE(pattern, 1);
   CHECK_PATH_FALSE(filename, 2);
@@ -1339,7 +1339,7 @@ bool f_fnmatch(const String& pattern,
   return fnmatch(pattern.data(), filename.data(), flags) == 0;
 }
 
-Variant f_glob(const String& pattern, int flags /* = 0 */) {
+Variant HHVM_FUNCTION(glob, const String& pattern, int flags /* = 0 */) {
   glob_t globbuf;
   int cwd_skip = 0;
   memset(&globbuf, 0, sizeof(glob_t));
@@ -1371,7 +1371,7 @@ Variant f_glob(const String& pattern, int flags /* = 0 */) {
 
   if (!globbuf.gl_pathc || !globbuf.gl_pathv) {
     if (ThreadInfo::s_threadInfo->m_reqInjectionData.hasSafeFileAccess()) {
-      if (!f_is_dir(work_pattern)) {
+      if (!HHVM_FN(is_dir)(work_pattern)) {
         return false;
       }
     }
@@ -1398,7 +1398,7 @@ Variant f_glob(const String& pattern, int flags /* = 0 */) {
      * determine the information for each file. I.e., the caller must still be
      * able to filter directories out.
      */
-    if ((flags & GLOB_ONLYDIR) && !f_is_dir(globbuf.gl_pathv[n])) {
+    if ((flags & GLOB_ONLYDIR) && !HHVM_FN(is_dir)(globbuf.gl_pathv[n])) {
       continue;
     }
     ret.append(String(globbuf.gl_pathv[n] + cwd_skip, CopyString));
@@ -1417,14 +1417,14 @@ Variant f_glob(const String& pattern, int flags /* = 0 */) {
   return ret;
 }
 
-Variant f_tempnam(const String& dir, const String& prefix) {
+Variant HHVM_FUNCTION(tempnam, const String& dir, const String& prefix) {
   CHECK_PATH(dir, 1);
   String tmpdir = dir, trailing_slash = "/";
-  if (tmpdir.empty() || !f_is_dir(tmpdir) || !f_is_writable(tmpdir)) {
+  if (tmpdir.empty() || !HHVM_FN(is_dir)(tmpdir) || !HHVM_FN(is_writable)(tmpdir)) {
     tmpdir = HHVM_FN(sys_get_temp_dir)();
   }
   tmpdir = File::TranslatePath(tmpdir);
-  String pbase = f_basename(prefix);
+  String pbase = HHVM_FN(basename)(prefix);
   if (pbase.size() > 64) pbase = pbase.substr(0, 63);
   if ((tmpdir.length() > 0) && (tmpdir[tmpdir.length() - 1] == '/')) {
     trailing_slash = "";
@@ -1443,7 +1443,7 @@ Variant f_tempnam(const String& dir, const String& prefix) {
   return String(buf, CopyString);
 }
 
-Variant f_tmpfile() {
+Variant HHVM_FUNCTION(tmpfile) {
   FILE *f = tmpfile();
   if (f) {
     return Resource(NEWOBJ(PlainFile)(f));
@@ -1454,7 +1454,7 @@ Variant f_tmpfile() {
 ///////////////////////////////////////////////////////////////////////////////
 // directory functions
 
-bool f_mkdir(const String& pathname, int64_t mode /* = 0777 */,
+bool HHVM_FUNCTION(mkdir, const String& pathname, int64_t mode /* = 0777 */,
              bool recursive /* = false */, const Variant& context /* = null */) {
   CHECK_PATH_FALSE(pathname, 1);
   Stream::Wrapper* w = Stream::getWrapperFromURI(pathname);
@@ -1464,7 +1464,7 @@ bool f_mkdir(const String& pathname, int64_t mode /* = 0777 */,
   return true;
 }
 
-bool f_rmdir(const String& dirname, const Variant& context /* = null */) {
+bool HHVM_FUNCTION(rmdir, const String& dirname, const Variant& context /* = null */) {
   Stream::Wrapper* w = Stream::getWrapperFromURI(dirname);
   if (!w) return false;
   int options = 0;
@@ -1472,27 +1472,27 @@ bool f_rmdir(const String& dirname, const Variant& context /* = null */) {
   return true;
 }
 
-String f_dirname(const String& path) {
+String HHVM_FUNCTION(dirname, const String& path) {
   char *buf = strndup(path.data(), path.size());
   int len = FileUtil::dirname_helper(buf, path.size());
   return String(buf, len, AttachString);
 }
 
-Variant f_getcwd() {
+Variant HHVM_FUNCTION(getcwd) {
   return g_context->getCwd();
 }
 
-bool f_chdir(const String& directory) {
+bool HHVM_FUNCTION(chdir, const String& directory) {
   CHECK_PATH_FALSE(directory, 1);
-  if (f_is_dir(directory)) {
-    g_context->setCwd(f_realpath(directory));
+  if (HHVM_FUNCTION(is_dir, directory)) {
+    g_context->setCwd(HHVM_FN(realpath)(directory));
     return true;
   }
   raise_warning("No such file or directory (errno 2)");
   return false;
 }
 
-bool f_chroot(const String& directory) {
+bool HHVM_FUNCTION(chroot, const String& directory) {
   CHECK_PATH_FALSE(directory, 1);
   CHECK_SYSTEM(chroot(File::TranslatePath(directory).data()));
   CHECK_SYSTEM(chdir("/"));
@@ -1537,8 +1537,8 @@ static Directory *get_dir(const Resource& dir_handle) {
   return d;
 }
 
-Variant f_dir(const String& directory) {
-  Variant dir = f_opendir(directory);
+Variant HHVM_FUNCTION(dir, const String& directory) {
+  Variant dir = HHVM_FN(opendir)(directory);
   if (same(dir, false)) {
     return false;
   }
@@ -1548,7 +1548,7 @@ Variant f_dir(const String& directory) {
   return d;
 }
 
-Variant f_opendir(const String& path, const Variant& context /* = null */) {
+Variant HHVM_FUNCTION(opendir, const String& path, const Variant& context /* = null */) {
   Stream::Wrapper* w = Stream::getWrapperFromURI(path);
   if (!w) return false;
   Directory *p = w->opendir(path);
@@ -1559,7 +1559,7 @@ Variant f_opendir(const String& path, const Variant& context /* = null */) {
   return Resource(p);
 }
 
-Variant f_readdir(const Resource& dir_handle /* = null */) {
+Variant HHVM_FUNCTION(readdir, const Resource& dir_handle /* = null */) {
   Directory *dir = get_dir(dir_handle);
   if (!dir) {
     return false;
@@ -1567,7 +1567,7 @@ Variant f_readdir(const Resource& dir_handle /* = null */) {
   return dir->read();
 }
 
-void f_rewinddir(const Resource& dir_handle /* = null */) {
+void HHVM_FUNCTION(rewinddir, const Resource& dir_handle /* = null */) {
   Directory *dir = get_dir(dir_handle);
   if (!dir) {
     return;
@@ -1583,7 +1583,7 @@ static bool StringAscending(const String& s1, const String& s2) {
   return s1.less(s2);
 }
 
-Variant f_scandir(const String& directory, bool descending /* = false */,
+Variant HHVM_FUNCTION(scandir, const String& directory, bool descending /* = false */,
                   const Variant& context /* = null */) {
   CHECK_PATH(directory, 1);
   Stream::Wrapper* w = Stream::getWrapperFromURI(directory);
@@ -1617,7 +1617,7 @@ Variant f_scandir(const String& directory, bool descending /* = false */,
   return ret;
 }
 
-void f_closedir(const Resource& dir_handle /* = null */) {
+void HHVM_FUNCTION(closedir, const Resource& dir_handle /* = null */) {
   Directory *d = get_dir(dir_handle);
   if (!d) {
     return;
@@ -1626,6 +1626,108 @@ void f_closedir(const Resource& dir_handle /* = null */) {
     s_directory_data->defaultDirectory = nullptr;
   }
   d->close();
+}
+
+void StandardExtension::initFile() {
+  HHVM_FE(fopen);
+  HHVM_FE(popen);
+  HHVM_FE(fclose);
+  HHVM_FE(pclose);
+  HHVM_FE(fseek);
+  HHVM_FE(rewind);
+  HHVM_FE(ftell);
+  HHVM_FE(feof);
+  HHVM_FE(fstat);
+  HHVM_FE(fread);
+  HHVM_FE(fgetc);
+  HHVM_FE(fgets);
+  HHVM_FE(fgetss);
+  HHVM_FE(fscanf);
+  HHVM_FE(fpassthru);
+  HHVM_FE(fwrite);
+  HHVM_FE(fputs);
+  HHVM_FE(fprintf);
+  HHVM_FE(vfprintf);
+  HHVM_FE(fflush);
+  HHVM_FE(ftruncate);
+  HHVM_FE(flock);
+  HHVM_FE(fputcsv);
+  HHVM_FE(fgetcsv);
+  HHVM_FE(file_get_contents);
+  HHVM_FE(file_put_contents);
+  HHVM_FE(file);
+  HHVM_FE(readfile);
+  HHVM_FE(move_uploaded_file);
+  HHVM_FE(parse_ini_file);
+  HHVM_FE(parse_ini_string);
+  HHVM_FE(md5_file);
+  HHVM_FE(sha1_file);
+  HHVM_FE(chown);
+  HHVM_FE(chmod);
+  HHVM_FE(lchown);
+  HHVM_FE(chgrp);
+  HHVM_FE(lchgrp);
+  HHVM_FE(touch);
+  HHVM_FE(copy);
+  HHVM_FE(rename);
+  HHVM_FE(umask);
+  HHVM_FE(unlink);
+  HHVM_FE(link);
+  HHVM_FE(symlink);
+  HHVM_FE(basename);
+  HHVM_FE(fnmatch);
+  HHVM_FE(glob);
+  HHVM_FE(tempnam);
+  HHVM_FE(tmpfile);
+  HHVM_FE(fileperms);
+  HHVM_FE(fileinode);
+  HHVM_FE(filesize);
+  HHVM_FE(fileowner);
+  HHVM_FE(filegroup);
+  HHVM_FE(fileatime);
+  HHVM_FE(filemtime);
+  HHVM_FE(filectime);
+  HHVM_FE(filetype);
+  HHVM_FE(linkinfo);
+  HHVM_FE(is_writable);
+  HHVM_FE(is_writeable);
+  HHVM_FE(is_readable);
+  HHVM_FE(is_executable);
+  HHVM_FE(is_file);
+  HHVM_FE(is_dir);
+  HHVM_FE(is_link);
+  HHVM_FE(is_uploaded_file);
+  HHVM_FE(file_exists);
+  HHVM_FE(stat);
+  HHVM_FE(lstat);
+  HHVM_FE(clearstatcache);
+  HHVM_FE(readlink_internal);
+  HHVM_FE(readlink);
+  HHVM_FE(realpath);
+  HHVM_FE(pathinfo);
+  HHVM_FE(disk_free_space);
+  HHVM_FE(diskfreespace);
+  HHVM_FE(disk_total_space);
+  HHVM_FE(mkdir);
+  HHVM_FE(rmdir);
+  HHVM_FE(dirname);
+  HHVM_FE(getcwd);
+  HHVM_FE(chdir);
+  HHVM_FE(chroot);
+  HHVM_FE(dir);
+  HHVM_FE(opendir);
+  HHVM_FE(readdir);
+  HHVM_FE(rewinddir);
+  HHVM_FE(scandir);
+  HHVM_FE(closedir);
+
+//  Native::registerConstant<KindOfResource>(makeStaticString("STDIN"), k_STDIN);
+//  Native::registerConstant<KindOfResource>(makeStaticString("STDOUT"), k_STDOUT);
+//  Native::registerConstant<KindOfResource>(makeStaticString("STDERR"), k_STDERR);
+  Native::registerConstant<KindOfInt64>(makeStaticString("STREAM_URL_STAT_LINK"), k_STREAM_URL_STAT_LINK);
+  Native::registerConstant<KindOfInt64>(makeStaticString("STREAM_URL_STAT_QUIET"), k_STREAM_URL_STAT_QUIET);
+
+  loadSystemlib("std_file");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

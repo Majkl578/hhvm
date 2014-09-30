@@ -1,6 +1,6 @@
 #include "hphp/runtime/ext_zend_compat/php-src/TSRM/tsrm_virtual_cwd.h"
 
-#include "hphp/runtime/ext/ext_file.h"
+#include "hphp/runtime/ext/std/ext_std_file.h"
 
 #define CWD_STATE_COPY(d, s)                       \
   (d)->cwd_length = (s)->cwd_length;               \

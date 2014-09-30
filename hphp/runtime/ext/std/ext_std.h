@@ -20,6 +20,7 @@ class StandardExtension : public Extension {
     initVariable();
     initMisc();
     initStreamUserFilters();
+    initFile();
   }
 
   void threadInit() {
@@ -36,6 +37,7 @@ class StandardExtension : public Extension {
   void initVariable();
   void initMisc();
   void initStreamUserFilters();
+  void initFile();
 
   void threadInitMisc();
 };

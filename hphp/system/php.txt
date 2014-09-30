@@ -88,7 +88,6 @@ hphp/system/php/curl/CURLFile.php
 hphp/system/php/date/dateperiod.php
 hphp/system/php/date/datetime_funcs.php
 hphp/system/php/dom/DOMException.php
-hphp/system/php/file_system/Directory.php
 hphp/system/php/hash/furchash.php
 hphp/system/php/hash/hash.php
 hphp/system/php/hash/hphp_murmurhash.php

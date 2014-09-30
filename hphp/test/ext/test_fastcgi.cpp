@@ -283,7 +283,7 @@ bool TestFastCGIServer::AddFile(const std::string& path,
                                 int line) {
   String source("test/ext/fastcgi/" + path);
   String dest("runtime/tmp/" + path);
-  if (!f_copy(source, dest)) {
+  if (!HHVM_FN(copy)(source, dest)) {
     printf("Unable to copy file from source: %s "
            "to destination: %s. Run this test from hphp/.\n",
            source.data(),
@@ -298,7 +298,7 @@ bool TestFastCGIServer::VerifyExchange(const TestMessageExchange& mx,
                                        const char* file,
                                        int line) {
 
-  Variant cwd = f_getcwd();
+  Variant cwd = HHVM_FN(getcwd)();
   CHECK(cwd.isString());
 
   CHECK(!mx.m_messages.empty());

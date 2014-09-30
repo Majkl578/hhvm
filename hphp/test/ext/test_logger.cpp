@@ -126,7 +126,7 @@ std::string TestLogger::getRepoRoot() {
 
     // Need to normalize of this commands succeeds
     if (getOutput("git rev-parse --show-cdup", out) != -1)
-      return f_realpath(String(out)).toString().data();
+      return HHVM_FN(realpath)(String(out)).toString().data();
   }
 
   // Fall back to our current directory

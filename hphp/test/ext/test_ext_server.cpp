@@ -29,7 +29,7 @@ bool TestExtServer::RunTests(const std::string &which) {
 
   DECLARE_TEST_FUNCTIONS("");
 
-  std::string root = std::string(f_getcwd().toString().c_str()) + "/test/ext/";
+  std::string root = std::string(HHVM_FN(getcwd)().toString().c_str()) + "/test/ext/";
 
   RuntimeOption::SourceRoot = root;
   RuntimeOption::PageletServerThreadCount = 10;

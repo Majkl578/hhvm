@@ -6120,7 +6120,8 @@ const StaticString
   s_HipHopSpecific("__HipHopSpecific"),
   s_IsFoldable("__IsFoldable"),
   s_ParamCoerceModeNull("__ParamCoerceModeNull"),
-  s_ParamCoerceModeFalse("__ParamCoerceModeFalse");
+  s_ParamCoerceModeFalse("__ParamCoerceModeFalse"),
+  s_VariadicByRef("__VariadicByRef");
 
 static void parseUserAttributes(FuncEmitter* fe, Attr& attrs) {
   if (fe->userAttributes.count(s_HipHopSpecific.get())) {
@@ -6133,6 +6134,8 @@ static void parseUserAttributes(FuncEmitter* fe, Attr& attrs) {
     attrs = attrs | AttrParamCoerceModeNull;
   } else if (fe->userAttributes.count(s_ParamCoerceModeFalse.get())) {
     attrs = attrs | AttrParamCoerceModeFalse;
+  } else if (fe->userAttributes.count(s_VariadicByRef.get())) {
+    attrs = attrs | AttrVariadicByRef;
   }
 }
 
